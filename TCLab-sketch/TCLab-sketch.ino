@@ -48,12 +48,11 @@
       1.2.0 added LED command
       1.2.1 correctly reset heater values on close
             added version history
-      1.2.2 raised the baud rate from 9600 to 57600
 */
 
 // constants
-const String vers = "1.2.2";   // version of this firmware
-const int baud = 57600;        // serial baud rate
+const String vers = "1.2.1";   // version of this firmware
+const int baud = 9600;         // serial baud rate
 const char sp = ' ';           // command separator
 const char nl = '\n';          // command terminator
 
