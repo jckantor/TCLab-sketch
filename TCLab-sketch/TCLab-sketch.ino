@@ -48,11 +48,13 @@
       1.2.0 added LED command
       1.2.1 correctly reset heater values on close
             added version history
+      1.2.2 shorten version string for better display by TCLab
+      1.2.3 move baudrate to from 9600 to 115200
 */
 
 // constants
-const String vers = "1.2.1";   // version of this firmware
-const int baud = 9600;         // serial baud rate
+const String vers = "1.2.2";   // version of this firmware
+const long baud = 115200;      // serial baud rate
 const char sp = ' ';           // command separator
 const char nl = '\n';          // command terminator
 
@@ -167,8 +169,7 @@ void dispatchCommand(void) {
     Serial.println(Q2);
   }
   else if (cmd == "T1") {
-    float mV = (float) analogRead(pinT1) * (3300.0/1024.0);
-    float degC = (mV - 500.0)/10.0;
+    float degC = (float) analogRead(pinT1) * 0.3223 - 50.0;
     Serial.println(degC);
   }
   else if (cmd == "T2") {
@@ -177,7 +178,7 @@ void dispatchCommand(void) {
     Serial.println(degC);
   }
   else if (cmd == "VER") {
-    Serial.println("TCLab Firmware Version " + vers);
+    Serial.println("TCLab Firmware " + vers);
   }
   else if ((cmd == "X") or (cmd.length() > 0)) {
     setHeater1(0);
@@ -210,25 +211,29 @@ void updateStatus(void) {
   if (millis() < ledTimeout) {        // override led operation
     analogWrite(pinLED1, LED);
   }
-  else if (ledStatus == 1) {          // normal operation, heaters off
-    analogWrite(pinLED1, loLED);
-  }
-  else if (ledStatus == 2) {          // normal operation, heater on
-    analogWrite(pinLED1, hiLED);
-  }
-  else if (ledStatus == 3) {          // high temperature alarm, heater off
-    if ((millis() % 2000) > 1000) {
-      analogWrite(pinLED1, loLED);
-    } else {
-      analogWrite(pinLED1, loLED/4);
-    }
-  }
-  else if (ledStatus == 4) {          // hight temperature alarm, heater on
-    if ((millis() % 2000) > 1000) {
-      analogWrite(pinLED1, hiLED);
-    } else {
-      analogWrite(pinLED1, loLED);
-    }
+  else {
+    switch (ledStatus) {
+      case 1:  // normal operation, heaters off
+        analogWrite(pinLED1, loLED);
+        break;
+      case 2:  // normal operation, heater on
+        analogWrite(pinLED1, hiLED);
+        break;
+      case 3:  // high temperature alarm, heater off
+        if ((millis() % 2000) > 1000) {
+          analogWrite(pinLED1, loLED);
+        } else {
+          analogWrite(pinLED1, loLED/4);
+        }
+        break;
+      case 4:
+        if ((millis() % 2000) > 1000) {
+          analogWrite(pinLED1, hiLED);
+        } else {
+          analogWrite(pinLED1, loLED);
+        }
+        break;
+    }   
   }
 }
 
