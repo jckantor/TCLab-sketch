@@ -53,7 +53,7 @@
 */
 
 // constants
-const String vers = "1.2.2";   // version of this firmware
+const String vers = "1.2.3";   // version of this firmware
 const long baud = 115200;      // serial baud rate
 const char sp = ' ';           // command separator
 const char nl = '\n';          // command terminator
