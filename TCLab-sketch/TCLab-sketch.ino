@@ -15,6 +15,7 @@
   Q2 float  set Heater 2, range 0 to 100. Returns value of Q2.
   R1        get value of Heater 1, range 0 to 100
   R2        get value of Heater 2, range 0 to 100
+  SCAN      get values T1 T2 Q1 Q1 in line delimited values
   T1        get Temperature T1. Returns value of T1 in °C.
   T2        get Temperature T2. Returns value of T2 in °C.
   VER       get firmware version string
@@ -168,14 +169,17 @@ void dispatchCommand(void) {
   else if (cmd == "R2") {
     Serial.println(Q2);
   }
+  else if (cmd == "SCAN") {
+    Serial.println((float) analogRead(pinT1) * 0.3223 - 50.0);
+    Serial.println((float) analogRead(pinT2) * 0.3223 - 50.0);
+    Serial.println(Q1);
+    Serial.println(Q2);
+  }
   else if (cmd == "T1") {
-    float degC = (float) analogRead(pinT1) * 0.3223 - 50.0;
-    Serial.println(degC);
+    Serial.println((float) analogRead(pinT1) * 0.3223 - 50.0);
   }
   else if (cmd == "T2") {
-    float mV = (float) analogRead(pinT2) * (3300.0/1024.0);
-    float degC = (mV - 500.0)/10.0;
-    Serial.println(degC);
+    Serial.println((float) analogRead(pinT2) * 0.3223 - 50.0);
   }
   else if (cmd == "VER") {
     Serial.println("TCLab Firmware " + vers);
