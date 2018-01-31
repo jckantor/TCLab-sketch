@@ -51,6 +51,7 @@
             added version history
       1.2.2 shorten version string for better display by TCLab
       1.2.3 move baudrate to from 9600 to 115200
+      1.3.0 add SCAN function
 */
 
 // constants
