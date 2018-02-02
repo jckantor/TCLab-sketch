@@ -67,9 +67,9 @@ const int pinQ1   = 3;         // Q1
 const int pinQ2   = 5;         // Q2
 const int pinLED1 = 9;         // LED1
 
-// temperature alarm limits expressed (units of pin values)
-const int limT1   = 310;       // T1 high alarm (50 °C)
-const int limT2   = 310;       // T2 high alarm (50 °C)
+// temperature alarm limits
+const int limT1   = 50;       // T1 high alarm (°C)
+const int limT2   = 50;       // T2 high alarm (°C)
 
 // LED1 levels
 const int hiLED   =  60;       // hi LED
@@ -113,6 +113,10 @@ void echoCommand() {
     Serial.write(nl);
     Serial.flush();
   }
+}
+
+inline float readTemperature(int pin) {
+  return analogRead(pin) * 0.3223 - 50.0;
 }
 
 void parseCommand(void) {
@@ -171,16 +175,16 @@ void dispatchCommand(void) {
     Serial.println(Q2);
   }
   else if (cmd == "SCAN") {
-    Serial.println((float) analogRead(pinT1) * 0.3223 - 50.0);
-    Serial.println((float) analogRead(pinT2) * 0.3223 - 50.0);
+    Serial.println(readTemperature(pinT1));
+    Serial.println(readTemperature(pinT2));
     Serial.println(Q1);
     Serial.println(Q2);
   }
   else if (cmd == "T1") {
-    Serial.println((float) analogRead(pinT1) * 0.3223 - 50.0);
+    Serial.println(readTemperature(pinT1));
   }
   else if (cmd == "T2") {
-    Serial.println((float) analogRead(pinT2) * 0.3223 - 50.0);
+    Serial.println(readTemperature(pinT2));
   }
   else if (cmd == "VER") {
     Serial.println("TCLab Firmware " + vers);
@@ -195,7 +199,7 @@ void dispatchCommand(void) {
 }
 
 void checkAlarm(void) {
-  if ((analogRead(pinT1) > limT1) or (analogRead(pinT2) > limT2)) {
+  if ((readTemperature(pinT1) > limT1) or (readTemperature(pinT2) > limT2)) {
     alarmStatus = 1;
   }
   else {
