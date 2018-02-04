@@ -52,10 +52,29 @@
       1.2.2 shorten version string for better display by TCLab
       1.2.3 move baudrate to from 9600 to 115200
       1.3.0 add SCAN function
+            report board type in version string
 */
 
+// determine board type
+#if ARDUINO >= 100
+  #include "Arduino.h"
+#else
+  #include "WProgram.h"
+#endif
+
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
+  String boardType = "Arduino Uno";
+#elif defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
+  String boardType = "Arduino Leonardo/Micro";
+#elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+  String boardType = "Arduino Mega";
+#else 
+  String boardType = "Unknown board";
+#endif
+
+
 // constants
-const String vers = "1.2.3";   // version of this firmware
+const String vers = "1.3.0";   // version of this firmware
 const long baud = 115200;      // serial baud rate
 const char sp = ' ';           // command separator
 const char nl = '\n';          // command terminator
@@ -106,6 +125,7 @@ void readCommand() {
   }
 }
 
+// for debugging with the serial monitor in Arduino IDE
 void echoCommand() {
   if (newData) {
     Serial.write("Received Command: ");
@@ -115,6 +135,7 @@ void echoCommand() {
   }
 }
 
+// return thermister temperature in °C
 inline float readTemperature(int pin) {
   return analogRead(pin) * 0.3223 - 50.0;
 }
@@ -187,7 +208,7 @@ void dispatchCommand(void) {
     Serial.println(readTemperature(pinT2));
   }
   else if (cmd == "VER") {
-    Serial.println("TCLab Firmware " + vers);
+    Serial.println("TCLab Firmware " + vers + " " + boardType);
   }
   else if ((cmd == "X") or (cmd.length() > 0)) {
     setHeater1(0);
@@ -235,7 +256,7 @@ void updateStatus(void) {
           analogWrite(pinLED1, loLED/4);
         }
         break;
-      case 4:
+      case 4:  // high temperature alarm, heater on
         if ((millis() % 2000) > 1000) {
           analogWrite(pinLED1, hiLED);
         } else {
