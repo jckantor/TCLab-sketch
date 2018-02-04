@@ -152,16 +152,6 @@ void readCommand() {
   }
 }
 
-// for debugging with the serial monitor in Arduino IDE
-void echoCommand() {
-  if (newData) {
-    Serial.write("Received Command: ");
-    Serial.write(Buffer, buffer_index);
-    Serial.write(nl);
-    Serial.flush();
-  }
-}
-
 // return thermister temperature in °C
 inline float readTemperature(int pin) {
   return analogRead(pin) * 0.3223 - 50.0;
@@ -336,7 +326,6 @@ void setup() {
 void loop() {
   selectSerial();
   readCommand();
-  //echoCommand();
   parseCommand();
   dispatchCommand();
   checkAlarm();
