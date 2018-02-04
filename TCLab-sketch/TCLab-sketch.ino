@@ -64,10 +64,15 @@
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
   String boardType = "Arduino Uno";
+  #define wSerial Serial
 #elif defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
   String boardType = "Arduino Leonardo/Micro";
+  #include <WebUSB.h>
+  WebUSB WebUSBSerial(1, "webusb.github.io/arduino/demos/console/");
+  #define wSerial WebUSBSerial
 #elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
   String boardType = "Arduino Mega";
+  #define wSerial ""
 #else 
   String boardType = "Unknown board";
 #endif
@@ -111,17 +116,39 @@ int Q1 = 0;                    // last value written to heater 1 in units of per
 int Q2 = 0;                    // last value written to heater 2 in units of percent
 int alarmStatus;               // hi temperature alarm status
 boolean newData = false;       // boolean flag indicating new command
+boolean webusb = false;        // boolean flag to select local or WebUSB interface
+
+// Check and select the active interface
+void selectSerial() {
+  if (Serial) 
+    webusb = false;
+  else if(wSerial) 
+    webusb = true;
+}
 
 void readCommand() {
-  while (Serial && (Serial.available() > 0) && (newData == false)) {
-    int byte = Serial.read();
-    if ((byte != '\r') && (byte != nl) && (buffer_index < 64)) {
-      Buffer[buffer_index] = byte;
-      buffer_index++;
+  if (!webusb) {
+    while (Serial && (Serial.available() > 0) && (newData == false)) {
+      int byte = Serial.read();
+      if ((byte != '\r') && (byte != nl) && (buffer_index < 64)) {
+        Buffer[buffer_index] = byte;
+        buffer_index++;
+      }
+      else {
+        newData = true;
+      }
     }
-    else {
-      newData = true;
-    }
+  } else {
+    while (wSerial && (wSerial.available() > 0) && (newData == false)) {
+      int byte = wSerial.read();
+      if ((byte != '\r') && (byte != nl) && (buffer_index < 64)) {
+        Buffer[buffer_index] = byte;
+        buffer_index++;
+      }
+      else {
+        newData = true;
+      }
+    }    
   }
 }
 
@@ -162,60 +189,69 @@ void parseCommand(void) {
   }
 }
 
+void sendResponse(String msg) {
+  if (!webusb)
+    Serial.println(msg);
+  else
+    wSerial.println(msg);
+}
+
 void dispatchCommand(void) {
   if (cmd == "A") {
     setHeater1(0);
     setHeater2(0);
-    Serial.println("Start");
+    sendResponse("Start");
   }
   else if (cmd == "LED") {
     ledTimeout = millis() + 10000;
     LED = max(0, min(100, val));
-    Serial.println(LED);
+    sendResponse(String(LED));
   }
   else if (cmd == "P1") {
     P1 = max(0, min(255, val));
-    Serial.println(P1);
+    sendResponse(String(P1));
   }
   else if (cmd == "P2") {
     P2 = max(0, min(255, val));
-    Serial.println(P2);
+    sendResponse(String(P2));
   }
   else if (cmd == "Q1") {
     setHeater1(val);
-    Serial.println(Q1);
+    sendResponse(String(Q1));
   }
   else if (cmd == "Q2") {
     setHeater2(val);
-    Serial.println(Q2);
+    sendResponse(String(Q2));
   }
   else if (cmd == "R1") {
-    Serial.println(Q1);
+    sendResponse(String(Q1));
   }
   else if (cmd == "R2") {
-    Serial.println(Q2);
+    sendResponse(String(Q2));
   }
   else if (cmd == "SCAN") {
-    Serial.println(readTemperature(pinT1));
-    Serial.println(readTemperature(pinT2));
-    Serial.println(Q1);
-    Serial.println(Q2);
+    sendResponse(String(readTemperature(pinT1)));
+    sendResponse(String(readTemperature(pinT2)));
+    sendResponse(String(Q1));
+    sendResponse(String(Q2));
   }
   else if (cmd == "T1") {
-    Serial.println(readTemperature(pinT1));
+    sendResponse(String(readTemperature(pinT1)));
   }
   else if (cmd == "T2") {
-    Serial.println(readTemperature(pinT2));
+    sendResponse(String(readTemperature(pinT2)));
   }
   else if (cmd == "VER") {
-    Serial.println("TCLab Firmware " + vers + " " + boardType);
+    sendResponse("TCLab Firmware " + vers + " " + boardType);
   }
   else if ((cmd == "X") or (cmd.length() > 0)) {
     setHeater1(0);
     setHeater2(0);
-    Serial.println(cmd);
+    sendResponse(cmd);
   }
-  Serial.flush();
+  if (!webusb)
+    Serial.flush();
+  else
   cmd = "";
 }
 
@@ -287,6 +323,10 @@ void setup() {
   }
   Serial.begin(baud);
   Serial.flush();
+  if (wSerial) {
+    wSerial.begin(baud);
+    wSerial.flush();
+  }
   setHeater1(0);
   setHeater2(0);
   ledTimeout = millis() + 1000;
@@ -294,6 +334,7 @@ void setup() {
 
 // arduino main event loop
 void loop() {
+  selectSerial();
   readCommand();
   //echoCommand();
   parseCommand();
