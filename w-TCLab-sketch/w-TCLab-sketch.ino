@@ -2,11 +2,9 @@
   TCLab Temperature Control Lab Firmware
   Jeffrey Kantor
   January, 2018
-
   This firmware provides a high level interface to the Temperature Control Lab. The
   firmware scans the serial port for case-insensitive commands. Each command returns
   a result string.
-
   A         software restart. Returns "Start".
   LED float set LED to float for 10 sec. range 0 to 100. Returns actual float
   P1 float  set pwm limit on heater 1, range 0 to 255. Default 200. Returns P1.
@@ -20,11 +18,8 @@
   T2        get Temperature T2. Returns value of T2 in °C.
   VER       get firmware version string
   X         stop, enter sleep mode. Returns "Stop".
-
   Limits on the heater can be configured with the constants below.
-
   Status is indicated by LED1 on the Temperature Control Lab. Status conditions are:
-
       LED1        LED1
       Brightness  State
       ----------  -----
@@ -32,13 +27,10 @@
       bright      steady     Normal operation, heaters on
       dim         blinking   High temperature alarm on, heaters off
       bright      blinking   High temperature alarm on, heaters on
-
   The Temperature Control Lab shuts down the heaters if it receives no host commands
   during a timeout period (configure below), receives an "X" command, or receives
   an unrecognized command from the host.
-
   The constants can be used to configure the firmware.
-
   Version History
       1.0.1 first version included in the tclab package
       1.1.0 added R1 and R2 commands to read current heater values
@@ -73,7 +65,7 @@
 #elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
   String boardType = "Arduino Mega";
   #define wSerial ""
-#else 
+#else
   String boardType = "Unknown board";
 #endif
 
@@ -120,9 +112,9 @@ boolean webusb = false;        // boolean flag to select local or WebUSB interfa
 
 // Check and select the active interface
 void selectSerial() {
-  if (Serial) 
+  if (Serial)
     webusb = false;
-  else if(wSerial) 
+  else if(wSerial)
     webusb = true;
 }
 
@@ -148,7 +140,17 @@ void readCommand() {
       else {
         newData = true;
       }
-    }    
+    }
+  }
+}
+
+// for debugging with the serial monitor in Arduino IDE
+void echoCommand() {
+  if (newData) {
+    Serial.write("Received Command: ");
+    Serial.write(Buffer, buffer_index);
+    Serial.write(nl);
+    Serial.flush();
   }
 }
 
@@ -239,10 +241,8 @@ void dispatchCommand(void) {
     setHeater2(0);
     sendResponse(cmd);
   }
-  if (boardType == "Arduino Leonardo/Micro")
-    wSerial.flush();
-  else
-    Serial.flush();
+  if (boardType == "Arduino Leonardo/Micro") wSerial.flush();
+  else Serial.flush();
   cmd = "";
 }
 
@@ -290,7 +290,7 @@ void updateStatus(void) {
           analogWrite(pinLED1, loLED);
         }
         break;
-    }   
+    }
   }
 }
 
@@ -309,9 +309,6 @@ void setHeater2(float qval) {
 // arduino startup
 void setup() {
   analogReference(EXTERNAL);
-  while (!Serial) {
-    ; // wait for serial port to connect.
-  }
   Serial.begin(baud);
   Serial.flush();
   if (boardType == "Arduino Leonardo/Micro") {
@@ -327,6 +324,7 @@ void setup() {
 void loop() {
   selectSerial();
   readCommand();
+  //echoCommand();
   parseCommand();
   dispatchCommand();
   checkAlarm();
