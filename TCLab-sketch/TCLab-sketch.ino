@@ -79,8 +79,11 @@
 #endif
 
 
+// Enable debugging output
+const bool DEBUG = false;
+
 // constants
-const String vers = "1.3.0";   // version of this firmware
+const String vers = "1.4.0";   // version of this firmware
 const long baud = 115200;      // serial baud rate
 const char sp = ' ';           // command separator
 const char nl = '\n';          // command terminator
@@ -104,7 +107,7 @@ const int loLED   = hiLED/16;  // lo LED
 char Buffer[64];               // buffer for parsing serial input
 int buffer_index = 0;          // index for Buffer
 String cmd;                    // command
-int val;                       // command value
+float val;                       // command value
 int ledStatus;                 // 1: loLED
                                // 2: hiLED
                                // 3: loLED blink
@@ -306,14 +309,14 @@ void updateStatus(void) {
 
 // set Heater 1
 void setHeater1(float qval) {
-  Q1 = max(0, min(qval, 100));
-  analogWrite(pinQ1, Q1*P1/100);
+  Q1 = max(0., min(qval, 100.));
+  analogWrite(pinQ1, (Q1*P1)/100);
 }
 
 // set Heater 2
 void setHeater2(float qval) {
-  Q2 = max(0, min(qval, 100));
-  analogWrite(pinQ2, Q2*P2/100);
+  Q2 = max(0., min(qval, 100.));
+  analogWrite(pinQ2, (Q2*P2)/100);
 }
 
 // arduino startup
@@ -337,7 +340,7 @@ void setup() {
 void loop() {
   selectSerial();
   readCommand();
-  //echoCommand();
+  if (DEBUG) echoCommand();
   parseCommand();
   dispatchCommand();
   checkAlarm();
