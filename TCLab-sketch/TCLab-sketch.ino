@@ -53,6 +53,7 @@
       1.2.3 move baudrate to from 9600 to 115200
       1.3.0 add SCAN function
             report board type in version string
+      1.4.0 changed Q1 and Q2 to float from int
 */
 
 // determine board type
@@ -112,8 +113,8 @@ long ledTimeout = 0;           // when to return LED to normal operation
 float LED = 100;               // LED override brightness
 float P1 = 200;                // heater 1 power limit in units of pwm. Range 0 to 255
 float P2 = 100;                // heater 2 power limit in units in pwm, range 0 to 255
-int Q1 = 0;                    // last value written to heater 1 in units of percent
-int Q2 = 0;                    // last value written to heater 2 in units of percent
+float Q1 = 0;                  // last value written to heater 1 in units of percent
+float Q2 = 0;                  // last value written to heater 2 in units of percent
 int alarmStatus;               // hi temperature alarm status
 boolean newData = false;       // boolean flag indicating new command
 boolean webusb = false;        // boolean flag to select local or WebUSB interface
@@ -177,7 +178,7 @@ void parseCommand(void) {
     cmd.trim();
     cmd.toUpperCase();
 
-    // extract data. toInt() returns 0 on error
+    // extract data. toFloat() returns 0 on error
     String data = read_.substring(idx + 1);
     data.trim();
     val = data.toFloat();
