@@ -55,12 +55,8 @@
             report board type in version string
 */
 
-// determine board type
-#if ARDUINO >= 100
-  #include "Arduino.h"
-#else
-  #include "WProgram.h"
-#endif
+// requires Arduino IDE >= 1.0.0
+#include "Arduino.h"
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
   String boardType = "Arduino Uno";
@@ -76,7 +72,6 @@
 #else 
   String boardType = "Unknown board";
 #endif
-
 
 // constants
 const String vers = "1.3.0";   // version of this firmware
