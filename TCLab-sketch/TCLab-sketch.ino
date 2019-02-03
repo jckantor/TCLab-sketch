@@ -53,10 +53,16 @@
       1.2.3 move baudrate to from 9600 to 115200
       1.3.0 add SCAN function
             report board type in version string
+      1.4.0 changed Q1 and Q2 to float from int
+      1.4.1 fix missing Serial.flush() at end of command loop
 */
 
-// requires Arduino IDE >= 1.0.0
-#include "Arduino.h"
+// determine board type
+#if ARDUINO >= 100
+  #include "Arduino.h"
+#else
+  #include "WProgram.h"
+#endif
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
   String boardType = "Arduino Uno";
@@ -73,8 +79,12 @@
   String boardType = "Unknown board";
 #endif
 
+
+// Enable debugging output
+const bool DEBUG = false;
+
 // constants
-const String vers = "1.3.0";   // version of this firmware
+const String vers = "1.4.1";   // version of this firmware
 const long baud = 115200;      // serial baud rate
 const char sp = ' ';           // command separator
 const char nl = '\n';          // command terminator
@@ -98,7 +108,7 @@ const int loLED   = hiLED/16;  // lo LED
 char Buffer[64];               // buffer for parsing serial input
 int buffer_index = 0;          // index for Buffer
 String cmd;                    // command
-int val;                       // command value
+float val;                     // command value
 int ledStatus;                 // 1: loLED
                                // 2: hiLED
                                // 3: loLED blink
@@ -107,8 +117,8 @@ long ledTimeout = 0;           // when to return LED to normal operation
 float LED = 100;               // LED override brightness
 float P1 = 200;                // heater 1 power limit in units of pwm. Range 0 to 255
 float P2 = 100;                // heater 2 power limit in units in pwm, range 0 to 255
-int Q1 = 0;                    // last value written to heater 1 in units of percent
-int Q2 = 0;                    // last value written to heater 2 in units of percent
+float Q1 = 0;                  // last value written to heater 1 in units of percent
+float Q2 = 0;                  // last value written to heater 2 in units of percent
 int alarmStatus;               // hi temperature alarm status
 boolean newData = false;       // boolean flag indicating new command
 boolean webusb = false;        // boolean flag to select local or WebUSB interface
@@ -147,6 +157,16 @@ void readCommand() {
   }
 }
 
+// for debugging with the serial monitor in Arduino IDE
+void echoCommand() {
+  if (newData) {
+    Serial.write("Received Command: ");
+    Serial.write(Buffer, buffer_index);
+    Serial.write(nl);
+    Serial.flush();
+  }
+}
+
 // return thermister temperature in °C
 inline float readTemperature(int pin) {
   return analogRead(pin) * 0.3223 - 50.0;
@@ -162,7 +182,7 @@ void parseCommand(void) {
     cmd.trim();
     cmd.toUpperCase();
 
-    // extract data. toInt() returns 0 on error
+    // extract data. toFloat() returns 0 on error
     String data = read_.substring(idx + 1);
     data.trim();
     val = data.toFloat();
@@ -234,10 +254,10 @@ void dispatchCommand(void) {
     setHeater2(0);
     sendResponse(cmd);
   }
-  if (boardType == "Arduino Leonardo/Micro")
-    wSerial.flush();
-  else
+  if (!webusb)
     Serial.flush();
+  else
+    wSerial.flush();
   cmd = "";
 }
 
@@ -291,14 +311,14 @@ void updateStatus(void) {
 
 // set Heater 1
 void setHeater1(float qval) {
-  Q1 = max(0, min(qval, 100));
-  analogWrite(pinQ1, Q1*P1/100);
+  Q1 = max(0., min(qval, 100.));
+  analogWrite(pinQ1, (Q1*P1)/100);
 }
 
 // set Heater 2
 void setHeater2(float qval) {
-  Q2 = max(0, min(qval, 100));
-  analogWrite(pinQ2, Q2*P2/100);
+  Q2 = max(0., min(qval, 100.));
+  analogWrite(pinQ2, (Q2*P2)/100);
 }
 
 // arduino startup
@@ -309,7 +329,7 @@ void setup() {
   }
   Serial.begin(baud);
   Serial.flush();
-  if (boardType == "Arduino Leonardo/Micro") {
+  if (wSerial) {
     wSerial.begin(baud);
     wSerial.flush();
   }
@@ -322,6 +342,7 @@ void setup() {
 void loop() {
   selectSerial();
   readCommand();
+  if (DEBUG) echoCommand();
   parseCommand();
   dispatchCommand();
   checkAlarm();
