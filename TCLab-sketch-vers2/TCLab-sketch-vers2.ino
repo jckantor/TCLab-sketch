@@ -22,6 +22,7 @@
   X         stop, enter sleep mode. Returns "Stop".
 
   Limits on the heater can be configured with the constants below.
+
   Status is indicated by LED1 on the Temperature Control Lab. Status conditions are:
 
       LED1        LED1
