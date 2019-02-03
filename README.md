@@ -1,12 +1,17 @@
 TCLab-sketch
 ============
 
-TCLab-sketch repository is an Arduino sketch which, when downloaded and installed
+TCLab-sketch repository is a set of Arduino sketches which, when downloaded and installed
 on a compatible Arduino device, supports the 
 [BYU Arduino Temperature Control Lab](http://apmonitor.com/pdc/index.php/Main/ArduinoTemperatureControl). 
 The sketch is used in conjunction with the compatible Python library 
 [TCLab](https://github.com/jckantor/TCLab) for programmable control of the Temperature
-Control Lab using Python over a USB connection.
+Control Lab using Python. There are three versions of the sketch:
+
+* |TCLab-sketch| Provides access to the TCLab via Python Serial library or WebUSB.
+* |TClab-sketch-webusb| Developmental version for WebUSB access.
+* |TCLab-sketch-vocareum| Developmental version for Vocareum using WebUSB access.
+
 
 Hardware setup
 --------------
