@@ -1,7 +1,7 @@
 /*
   TCLab Temperature Control Lab Firmware
   Jeffrey Kantor
-  January, 2018
+  February, 2019
 
   This firmware provides a high level interface to the Temperature Control Lab. The
   firmware scans the serial port for case-insensitive commands. Each command returns
