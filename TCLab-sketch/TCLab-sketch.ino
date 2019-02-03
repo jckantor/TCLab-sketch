@@ -54,6 +54,7 @@
       1.3.0 add SCAN function
             report board type in version string
       1.4.0 changed Q1 and Q2 to float from int
+      1.4.1 fix missing Serial.flush() at end of command loop
 */
 
 // determine board type
@@ -83,7 +84,7 @@
 const bool DEBUG = false;
 
 // constants
-const String vers = "1.4.0";   // version of this firmware
+const String vers = "1.4.1";   // version of this firmware
 const long baud = 115200;      // serial baud rate
 const char sp = ' ';           // command separator
 const char nl = '\n';          // command terminator
@@ -107,7 +108,7 @@ const int loLED   = hiLED/16;  // lo LED
 char Buffer[64];               // buffer for parsing serial input
 int buffer_index = 0;          // index for Buffer
 String cmd;                    // command
-float val;                       // command value
+float val;                     // command value
 int ledStatus;                 // 1: loLED
                                // 2: hiLED
                                // 3: loLED blink
@@ -256,6 +257,7 @@ void dispatchCommand(void) {
   if (!webusb)
     Serial.flush();
   else
+    wSerial.flush();
   cmd = "";
 }
 
