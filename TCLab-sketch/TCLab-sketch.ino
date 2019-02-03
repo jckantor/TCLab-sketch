@@ -4,8 +4,8 @@
   February, 2019
 
   This firmware provides a high level interface to the Temperature Control Lab. The
-  firmware scans the serial port for case-insensitive commands. Each command returns
-  a result string.
+  firmware scans the serial port for commands. Commands are case-insensitive. Any
+  unrecognized command results in sleep model. Each command returns a result string.
 
   A         software restart. Returns "Start".
   LED float set LED to float for 10 sec. range 0 to 100. Returns actual float
@@ -19,7 +19,7 @@
   T1        get Temperature T1. Returns value of T1 in °C.
   T2        get Temperature T2. Returns value of T2 in °C.
   VER       get firmware version string
-  X         stop, enter sleep mode. Returns "Stop".
+  X         stop, enter sleep mode. Returns "Stop"
 
   Limits on the heater can be configured with the constants below.
 
@@ -249,7 +249,12 @@ void dispatchCommand(void) {
   else if (cmd == "VER") {
     sendResponse("TCLab Firmware " + vers + " " + boardType);
   }
-  else if ((cmd == "X") or (cmd.length() > 0)) {
+  else if (cmd == "X") {
+    setHeater1(0);
+    setHeater2(0);
+    sendResponse("Stop");
+  }
+  else if (cmd.length() > 0) {
     setHeater1(0);
     setHeater2(0);
     sendResponse(cmd);
