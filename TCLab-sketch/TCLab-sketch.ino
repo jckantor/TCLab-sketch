@@ -55,15 +55,13 @@
             report board type in version string
       1.4.0 changed Q1 and Q2 to float from int
       1.4.1 fix missing Serial.flush() at end of command loop
+      1.4.2 fix bug with X command
+      1.4.3 required Arduino IDE Version >= 1.0.0
 */
 
-// determine board type
-#if ARDUINO >= 100
-  #include "Arduino.h"
-#else
-  #include "WProgram.h"
-#endif
+#include "Arduino.h"
 
+// determine board type
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
   String boardType = "Arduino Uno";
   #define wSerial Serial
@@ -79,12 +77,11 @@
   String boardType = "Unknown board";
 #endif
 
-
 // Enable debugging output
 const bool DEBUG = false;
 
 // constants
-const String vers = "1.4.1";   // version of this firmware
+const String vers = "1.4.3";   // version of this firmware
 const long baud = 115200;      // serial baud rate
 const char sp = ' ';           // command separator
 const char nl = '\n';          // command terminator
