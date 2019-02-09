@@ -57,6 +57,7 @@
       1.4.1 fix missing Serial.flush() at end of command loop
       1.4.2 fix bug with X command
       1.4.3 required Arduino IDE Version >= 1.0.0
+      1.5.0 remove webusb
 */
 
 #include "Arduino.h"
@@ -64,15 +65,10 @@
 // determine board type
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
   String boardType = "Arduino Uno";
-  #define wSerial Serial
 #elif defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
   String boardType = "Arduino Leonardo/Micro";
-  #include <WebUSB.h>
-  WebUSB WebUSBSerial(1, "webusb.github.io/arduino/demos/console/");
-  #define wSerial WebUSBSerial
 #elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
   String boardType = "Arduino Mega";
-  #define wSerial ""
 #else 
   String boardType = "Unknown board";
 #endif
@@ -118,40 +114,19 @@ float Q1 = 0;                  // last value written to heater 1 in units of per
 float Q2 = 0;                  // last value written to heater 2 in units of percent
 int alarmStatus;               // hi temperature alarm status
 boolean newData = false;       // boolean flag indicating new command
-boolean webusb = false;        // boolean flag to select local or WebUSB interface
 
-// Check and select the active interface
-void selectSerial() {
-  if (Serial) 
-    webusb = false;
-  else if(wSerial) 
-    webusb = true;
-}
 
 void readCommand() {
-  if (!webusb) {
-    while (Serial && (Serial.available() > 0) && (newData == false)) {
-      int byte = Serial.read();
-      if ((byte != '\r') && (byte != nl) && (buffer_index < 64)) {
-        Buffer[buffer_index] = byte;
-        buffer_index++;
-      }
-      else {
-        newData = true;
-      }
+  while (Serial && (Serial.available() > 0) && (newData == false)) {
+    int byte = Serial.read();
+    if ((byte != '\r') && (byte != nl) && (buffer_index < 64)) {
+      Buffer[buffer_index] = byte;
+      buffer_index++;
     }
-  } else {
-    while (wSerial && (wSerial.available() > 0) && (newData == false)) {
-      int byte = wSerial.read();
-      if ((byte != '\r') && (byte != nl) && (buffer_index < 64)) {
-        Buffer[buffer_index] = byte;
-        buffer_index++;
-      }
-      else {
-        newData = true;
-      }
-    }    
-  }
+    else {
+      newData = true;
+    }
+  }   
 }
 
 // for debugging with the serial monitor in Arduino IDE
@@ -192,10 +167,7 @@ void parseCommand(void) {
 }
 
 void sendResponse(String msg) {
-  if (!webusb)
-    Serial.println(msg);
-  else
-    wSerial.println(msg);
+  Serial.println(msg);
 }
 
 void dispatchCommand(void) {
@@ -256,10 +228,7 @@ void dispatchCommand(void) {
     setHeater2(0);
     sendResponse(cmd);
   }
-  if (!webusb)
-    Serial.flush();
-  else
-    wSerial.flush();
+  Serial.flush();
   cmd = "";
 }
 
@@ -331,10 +300,6 @@ void setup() {
   }
   Serial.begin(baud);
   Serial.flush();
-  if (wSerial) {
-    wSerial.begin(baud);
-    wSerial.flush();
-  }
   setHeater1(0);
   setHeater2(0);
   ledTimeout = millis() + 1000;
@@ -342,7 +307,6 @@ void setup() {
 
 // arduino main event loop
 void loop() {
-  selectSerial();
   readCommand();
   if (DEBUG) echoCommand();
   parseCommand();
