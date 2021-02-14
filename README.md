@@ -8,7 +8,7 @@ The sketch is used in conjunction with the compatible Python library
 [TCLab](https://github.com/jckantor/TCLab) for programmable control of the Temperature
 Control Lab using Python. There are three versions of the sketch:
 
-* **TCLab-sketch** Provides access to the TCLab via Python Serial library or WebUSB.
+* **TCLab-sketch** Provides access to the TCLab via Python Serial library.
 * **TClab-sketch-webusb** Developmental version for WebUSB access.
 * **TCLab-sketch-vocareum** Developmental version for Vocareum using WebUSB access.
 

@@ -1,7 +1,7 @@
 /*
   TCLab Temperature Control Lab Firmware
-  Jeffrey Kantor
-  February, 2019
+  Jeffrey Kantor, Bill Tubbs, John Hedengren, Shawn Summey
+  February 2021
 
   This firmware provides a high level interface to the Temperature Control Lab. The
   firmware scans the serial port for commands. Commands are case-insensitive. Any
@@ -13,15 +13,19 @@
   P2 float  set pwm limit on heater 2, range 0 to 255. Default 100. Returns P2.
   Q1 float  set Heater 1, range 0 to 100. Returns value of Q1.
   Q2 float  set Heater 2, range 0 to 100. Returns value of Q2.
+  Q1B float set Heater 1, range 0 to 100. Returns value of Q1 as a 32-bit float.
+  Q2B float set Heater 2, range 0 to 100. Returns value of Q2 as a 32-bit float.
   R1        get value of Heater 1, range 0 to 100
   R2        get value of Heater 2, range 0 to 100
   SCAN      get values T1 T2 Q1 Q1 in line delimited values
   T1        get Temperature T1. Returns value of T1 in °C.
   T2        get Temperature T2. Returns value of T2 in °C.
+  T1B       get Temperature T1. Returns value of T1 in °C as a 32-bit float.
+  T2B       get Temperature T2. Returns value of T2 in °C as a 32-bit float.
   VER       get firmware version string
   X         stop, enter sleep mode. Returns "Stop"
 
-  Limits on the heater can be configured with the constants below.
+  Limits on the heater power can be configured with the constants below.
 
   Status is indicated by LED1 on the Temperature Control Lab. Status conditions are:
 
@@ -37,27 +41,36 @@
   during a timeout period (configure below), receives an "X" command, or receives
   an unrecognized command from the host.
 
-  The constants can be used to configure the firmware.
+  Constants are used to configure the firmware.
 
-  Version History
+  Changelog ordered by Semantic Version
+  
       1.0.1 first version included in the tclab package
       1.1.0 added R1 and R2 commands to read current heater values
-            modified heater values to units of percent of full power
+            changed heater values to units of percent of full power
             added P1 and P2 commands to set heater power limits
-            rewrote readCommand to avoid busy states
-            simplified LED status model
+            changed readCommand to avoid busy states
+            changed simplified LED status model
       1.2.0 added LED command
-      1.2.1 correctly reset heater values on close
+      1.2.1 fixed reset heater values on close
             added version history
-      1.2.2 shorten version string for better display by TCLab
-      1.2.3 move baudrate to from 9600 to 115200
-      1.3.0 add SCAN function
-            report board type in version string
+      1.2.2 changed version string for better display by TCLab
+      1.2.3 changed baudrate to from 9600 to 115200
+      1.3.0 added SCAN function 
+            added board type in version string
       1.4.0 changed Q1 and Q2 to float from int
-      1.4.1 fix missing Serial.flush() at end of command loop
-      1.4.2 fix bug with X command
-      1.4.3 required Arduino IDE Version >= 1.0.0
-      1.5.0 remove webusb
+      1.4.1 fixed missing Serial.flush() at end of command loop
+      1.4.2 fixed bug with X command
+      1.4.3 deprecated use of Arduino IDE Version < 1.0.0
+      1.5.0 removed webusb
+      1.6.0 changed temperature to average 10 measurements to reduce noise
+      2.0.0 added binary communications.
+            added T1B and T2B commands return 32-bit float
+            added Q1B and Q2B commands return 32-bit float confirmation of heater setting
+            added calculation to use 1.75 AREF to match TMP36 voltage range 
+      2.0.1 added updates to Notre Dame and BYU versions of this firmware
+            changed version history to standard change log practices
+
 */
 
 #include "Arduino.h"
@@ -77,7 +90,7 @@
 const bool DEBUG = false;
 
 // constants
-const String vers = "1.4.3";   // version of this firmware
+const String vers = "2.0.1";   // version of this firmware
 const long baud = 115200;      // serial baud rate
 const char sp = ' ';           // command separator
 const char nl = '\n';          // command terminator
@@ -114,6 +127,7 @@ float Q1 = 0;                  // last value written to heater 1 in units of per
 float Q2 = 0;                  // last value written to heater 2 in units of percent
 int alarmStatus;               // hi temperature alarm status
 boolean newData = false;       // boolean flag indicating new command
+int n =  10;                   // number of samples for each temperature measurement
 
 
 void readCommand() {
@@ -139,9 +153,14 @@ void echoCommand() {
   }
 }
 
-// return thermister temperature in °C
+// return average  of n reads of thermister temperature in °C
 inline float readTemperature(int pin) {
-  return analogRead(pin) * 0.3223 - 50.0;
+  float degC = 0.0;
+  for (int i = 0; i < n; i++) {
+    degC += analogRead(pin) * 0.322265625 - 50.0;    // use for 3.3v AREF
+    //degC += analogRead(pin) * 0.170898438 - 50.0;  // use for 1.75v AREF
+  }
+  return degC / float(n);
 }
 
 void parseCommand(void) {
@@ -170,6 +189,15 @@ void sendResponse(String msg) {
   Serial.println(msg);
 }
 
+void sendFloatResponse(float val) {
+  Serial.println(String(val, 3));
+}
+
+void sendBinaryResponse(float val) {
+  byte *b = (byte*)&val;
+  Serial.write(b, 4);  
+}
+
 void dispatchCommand(void) {
   if (cmd == "A") {
     setHeater1(0);
@@ -191,29 +219,43 @@ void dispatchCommand(void) {
   }
   else if (cmd == "Q1") {
     setHeater1(val);
-    sendResponse(String(Q1));
+    sendFloatResponse(Q1);
+  }
+  else if (cmd == "Q1B") {
+    setHeater1(val);
+    sendBinaryResponse(Q1);
   }
   else if (cmd == "Q2") {
     setHeater2(val);
-    sendResponse(String(Q2));
+    sendFloatResponse(Q2);
+  }
+  else if (cmd == "Q2B") {
+    setHeater1(val);
+    sendBinaryResponse(Q2);
   }
   else if (cmd == "R1") {
-    sendResponse(String(Q1));
+    sendFloatResponse(Q1);
   }
   else if (cmd == "R2") {
-    sendResponse(String(Q2));
+    sendFloatResponse(Q2);
   }
   else if (cmd == "SCAN") {
-    sendResponse(String(readTemperature(pinT1)));
-    sendResponse(String(readTemperature(pinT2)));
-    sendResponse(String(Q1));
-    sendResponse(String(Q2));
+    sendFloatResponse(readTemperature(pinT1));
+    sendFloatResponse(readTemperature(pinT2));
+    sendFloatResponse(Q1);
+    sendFloatResponse(Q2);
   }
   else if (cmd == "T1") {
-    sendResponse(String(readTemperature(pinT1)));
+    sendFloatResponse(readTemperature(pinT1));
+  }
+  else if (cmd == "T1B") {
+    sendBinaryResponse(readTemperature(pinT1));
   }
   else if (cmd == "T2") {
-    sendResponse(String(readTemperature(pinT2)));
+    sendFloatResponse(readTemperature(pinT2));
+  }
+  else if (cmd == "T2B") {
+    sendBinaryResponse(readTemperature(pinT2));
   }
   else if (cmd == "VER") {
     sendResponse("TCLab Firmware " + vers + " " + boardType);
