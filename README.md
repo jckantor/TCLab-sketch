@@ -6,7 +6,7 @@ on a compatible Arduino device, supports the
 [Temperature Control Lab](http://apmonitor.com/pdc/index.php/Main/ArduinoTemperatureControl). 
 The sketch is used in conjunction with the compatible Python library 
 [TCLab](https://github.com/jckantor/TCLab) for programmable control of the Temperature
-Control Lab using Python. There are three versions of the sketch:
+Control Lab with Python. There are three versions of the sketch:
 
 * **TCLab-sketch** Provides access to the TCLab via Python Serial library.
 * **TClab-sketch-webusb** Developmental version for WebUSB access.
@@ -16,14 +16,14 @@ Control Lab using Python. There are three versions of the sketch:
 Hardware setup
 --------------
 
-1. Plug the Arduino (UNO or Leonardo) with the lab attached into your computer via the USB connection. 
-   Plug the DC adapter into the wall.
+1. Plug the Temperature Control Laboratory shield in an Arduino UNO or Leonardo. Connect your computer
+   to the Arduino via the USB connection. Plug the DC power adapter into the wall  and attach to the 
+   power input to the Temperature Control Laboratory sheid.
 
-2. (optional) Install Arduino Drivers
+2. If needed, install Arduino Drivers
 
-   *If you are using Windows 10, the Arduino board should connect without additional drivers required.*
-
-   Mac OS X users may need to install a serial driver. For arduino clones using the CH340G, CH34G
+   * if you are using Windows 10 the Arduino board should connect with no additional drivers required.
+   * Mac OS X users may need to install a serial driver. For arduino clones using the CH340G, CH34G
    or CH34X chipset, a suitable driver can be found 
    [here](https://github.com/MPParsley/ch340g-ch34g-ch34x-mac-os-x-driver>)
    or
@@ -31,8 +31,11 @@ Hardware setup
 
 3. Install Arduino Firmware
 
-   Flash the board with the custom firmware TCLab-sketch.ino located in the folder with the same name.
-   This is done using the [Arduino IDE](https://www.arduino.cc/en/Main/Software).
+   * Download and install the [Arduino IDE](https://www.arduino.cc/en/Main/Software) application.
+   * Download the file TCLab-sketch.ino located in this repository in the folder with the same name.
+   * Open the Arduino IDE application. From the Tools menu, select the Arduino board type and 
+     verify the port connection.
+    * Compile and upload TCLab-sketch.ino
    
 4. Test
 
