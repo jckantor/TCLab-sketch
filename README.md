@@ -20,11 +20,7 @@ Hardware setup
    to the Arduino via the USB connection. Plug the DC power adapter into the wall  and attach to the 
    power input to the Temperature Control Laboratory sheid.
 
-2. If needed, install Arduino Drivers
-
-   * if you are using Windows 10 the Arduino board should connect with no additional drivers required.
-   * Mac OS X users may need to install a serial driver. For arduino clones using the CH340G, CH34G
-   or CH34X chipset, a suitable driver can be found 
+2. Install Arduino Drivers if needed. For most users there will be no need. If you are using Windows 10 the Arduino board should connect with no additional drivers. Mac OS users may need to install a serial driver for old models of the Temperature Control that used Arduino Uno clones. For clones using the CH340G, CH34G or CH34X chipset, a suitable driver can be found 
    [here](https://github.com/MPParsley/ch340g-ch34g-ch34x-mac-os-x-driver>)
    or
    [here](https://github.com/adrianmihalko/ch340g-ch34g-ch34x-mac-os-x-driver)
